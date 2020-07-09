@@ -17,7 +17,7 @@ df = df[(df.position != "\\N") & (df.grid != 0)]
 df['position'] = df['position'].astype('int32')
 
 # classify first place
-df['position'] = np.where(df['position'] > 1, 2, 1)
+df['position'] = np.where(df['position'] > 1, 0, 1)
 
 X = df.drop(columns="position")
 y = df['position']
@@ -48,8 +48,8 @@ accuracy_score(y_val, y_predict)
 roc_auc_score(y_val, y_predict)
 
 pd.DataFrame(
-    confusion_matrix(y_val, y_predict), columns=["Pred First", "Pred Not First"],
-    index=["True First", "True Not First"]
+    confusion_matrix(y_val, y_predict), columns=["Pred Not First", "Pred  First"],
+    index=["True Not First", "True  First"]
 )
 
 # test 
@@ -58,6 +58,6 @@ precision_test, recall_test, fbeta_test, support_test = precision_recall_fscore_
 precision_test
 
 pd.DataFrame(
-    confusion_matrix(y_test, y_predict_test), columns=["Pred First", "Pred Not First"],
-    index=["True First", "True Not First"]
+    confusion_matrix(y_test, y_predict_test),  columns=["Pred Not First", "Pred  First"],
+    index=["True Not First", "True  First"]
 )
