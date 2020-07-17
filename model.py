@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.classification import fbeta_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, precision_recall_fscore_support
@@ -100,6 +102,8 @@ param_grid = dict(
     tree__min_samples_leaf=min_samples_leaf
 )
 
+# Need to do stratification due to unbalanced?
+# Nop. GridSearch used StratifiedKFold for classifiers if using cv = integer
 clf = GridSearchCV(pipeline_tree, param_grid=param_grid, verbose=8, scoring=['precision', 'recall', 'f1'],
                    refit='precision',
                    cv=5)
@@ -119,7 +123,104 @@ precision_test, recall_test, fbeta_test, support_test = precision_recall_fscore_
     y_test, y_predict_test)
 
 
+
 pd.DataFrame(
     confusion_matrix(y_test, y_predict_test),  columns=["Pred Not First", "Pred  First"],
     index=["True Not First", "True  First"]
 )
+
+
+## Logistic
+pipeline_lr = Pipeline(
+    steps=[
+        ("LR", LogisticRegression())
+    ]
+)
+
+penalty = ['l1', 'l2']
+class_weight = [None,"balanced"]
+
+param_grid = dict(
+    LR__penalty=penalty,
+    LR__class_weight=class_weight
+)
+
+# Need to do stratification due to unbalanced?
+# Nop. GridSearch used StratifiedKFold for classifiers if using cv = integer
+clf = GridSearchCV(pipeline_lr, param_grid=param_grid, verbose=8, scoring=['precision', 'recall', 'f1'],
+                   refit='precision',
+                   cv=5)
+clf = clf.fit(X, y)
+
+
+scores_df = pd.DataFrame(clf.cv_results_)
+scores_df = scores_df.sort_values(
+    by=['rank_test_recall']).reset_index(drop='index')
+scores_df.head()
+
+scores_df.to_csv('lr_score.csv')
+
+# test
+y_predict_test = clf.predict(X_test) # uses the best of the grid search
+precision_test, recall_test, fbeta_test, support_test = precision_recall_fscore_support(
+    y_test, y_predict_test)
+
+
+pd.DataFrame(
+    confusion_matrix(y_test, y_predict_test),  columns=["Pred Not First", "Pred  First"],
+    index=["True Not First", "True  First"]
+)
+
+## Random Forest
+
+pipeline_rf = Pipeline(
+    steps=[
+        ("rf", RandomForestClassifier())
+    ]
+)
+
+n_estimators = [10,50,100]
+criterion = ['gini', 'entropy']
+max_depth = [3, 5, 10]
+min_samples_split = [0.01, 0.05, 0.1, 0.2]
+min_samples_leaf = [0.01, 0.05, 0.1, 0.2]
+max_features = [None, "sqrt"]
+class_weight = [None,"balanced"]
+
+
+param_grid = dict(
+    rf__n_estimators = n_estimators,
+    rf__criterion=criterion,
+    rf__max_depth=max_depth,
+    rf__min_samples_split=min_samples_split,
+    rf__min_samples_leaf=min_samples_leaf,
+    rf__max_features = max_features,
+    rf__class_weight = class_weight
+)
+
+# Need to do stratification due to unbalanced?
+# Nop. GridSearch used StratifiedKFold for classifiers if using cv = integer
+clf = GridSearchCV(pipeline_rf, param_grid=param_grid, verbose=8, scoring=['precision', 'recall', 'f1'],
+                   refit='precision',
+                   cv=5)
+clf = clf.fit(X, y)
+
+
+scores_df = pd.DataFrame(clf.cv_results_)
+scores_df = scores_df.sort_values(
+    by=['rank_test_recall']).reset_index(drop='index')
+scores_df.head()
+
+scores_df.to_csv('rf_score.csv')
+
+# test
+y_predict_test = clf.predict(X_test) # uses the best of the grid search
+precision_test, recall_test, fbeta_test, support_test = precision_recall_fscore_support(
+    y_test, y_predict_test)
+
+
+pd.DataFrame(
+    confusion_matrix(y_test, y_predict_test),  columns=["Pred Not First", "Pred  First"],
+    index=["True Not First", "True  First"]
+)
+
