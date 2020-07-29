@@ -19,7 +19,9 @@ Then I have designated a benchmark model: predict that the winner is the driver 
 
 I tried the following four model architectures and searched for the best parameters using grid search within a 5 fold cross validation setup. After that I generated a simple voting ensemble model. Between parenthesis I state the mean precision score 
 
+#### DRAFT
 
+oversampling y undersampling para imbalanced class. Por el momento aumnetaron el recall pero redujeron precision. Mas falsos positivos.
 
 
 
