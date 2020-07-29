@@ -1,7 +1,7 @@
 import pandas as pd
 import pickle
 
-from pandas import read_clipboard, read_csv
+from pandas import read_csv
 
 # data
 results_data = "data/results.csv"

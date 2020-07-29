@@ -9,6 +9,11 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, precision_recall_fscore_support
 from sklearn.pipeline import Pipeline
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
+from imblearn.under_sampling import ClusterCentroids
+from imblearn.pipeline import Pipeline as imbPipeline # needed because RandomOverSamples does not have transform method
 from time import time
 import helpers
 import pickle
@@ -91,6 +96,27 @@ y_test = y.iloc[test_index:]
 X = X[:test_index]
 y = y[:test_index]
 
+#######################
+# Oversampling unbalanced class
+# Overfitted. Why?
+# Because training obs are also in Validation. I need to oversample in each Fold
+
+# synthetic_rows = X.loc[y == 1,]
+# synthetic_dep  = y.loc[y == 1]
+# for i in np.arange(10):
+#     X = X.append(synthetic_rows)
+#     y = y.append(synthetic_dep)
+
+# X = X.reset_index(drop = True) # needed, if not rows get repeated. I don't know why
+# y = y.reset_index(drop = True)
+# order = pd.Series(X.index)
+# np.random.shuffle(order)
+# X = X.loc[order,]
+# y = y.loc[order]
+
+####################
+
+
 # train validation in case of need
 X_train, X_val, y_train,  y_val = train_test_split(X, y, test_size=val_size,
                                                    random_state=seed)
@@ -118,9 +144,14 @@ pd.DataFrame(
 
 model_results = pd.DataFrame()  # we will store each model iteration here
 
+# ClusterCentroids takes a long time in TREE
+samplers_to_test = [None, RandomOverSampler(), SMOTE(), ADASYN(), ClusterCentroids()]
+
 # TREE
-pipeline_tree = Pipeline(
+
+pipeline_tree = imbPipeline(
     steps=[
+        ('samp',None),
         ("tree", DecisionTreeClassifier())
     ]
 )
@@ -131,6 +162,7 @@ min_samples_split = [0.01, 0.05, 0.1, 0.2]
 min_samples_leaf = [0.01, 0.05, 0.1, 0.2]
 
 param_grid = dict(
+    samp = samplers_to_test,
     tree__criterion=criterion,
     tree__max_depth=max_depth,
     tree__min_samples_split=min_samples_split,
@@ -148,8 +180,9 @@ model_results = model_results.append(helpers.extract_scores_kfold(
     clf_tree, None))  # appends CV results
 
 # Logistic
-pipeline_lr = Pipeline(
+pipeline_lr =imbPipeline(
     steps=[
+        ('samp', None),
         ("LR", LogisticRegression())
     ]
 )
@@ -158,6 +191,7 @@ penalty = ['l1', 'l2']
 class_weight = [None, "balanced"]
 
 param_grid = dict(
+    samp = samplers_to_test,
     LR__penalty=penalty,
     LR__class_weight=class_weight
 )
@@ -172,48 +206,50 @@ clf_lr = clf_lr.fit(X, y)
 model_results = model_results.append(helpers.extract_scores_kfold(clf_lr, None))
 
 # Random Forest
+# Takes a couple of minutes
 
-pipeline_rf = Pipeline(
-    steps=[
-        ("rf", RandomForestClassifier())
-    ]
-)
+# pipeline_rf = Pipeline(
+#     steps=[
+#         ('samp', None),  
+#         ("rf", RandomForestClassifier())
+#     ]
+# )
 
-n_estimators = [10, 50, 100]
-criterion = ['gini', 'entropy']
-max_depth = [3, 5, 10]
-min_samples_split = [0.01, 0.05, 0.1, 0.2]
-min_samples_leaf = [0.01, 0.05, 0.1, 0.2]
-max_features = [None, "sqrt"]
-class_weight = [None, "balanced"]
-
-
-param_grid = dict(
-    rf__n_estimators=n_estimators,
-    rf__criterion=criterion,
-    rf__max_depth=max_depth,
-    rf__min_samples_split=min_samples_split,
-    rf__min_samples_leaf=min_samples_leaf,
-    rf__max_features=max_features,
-    rf__class_weight=class_weight
-)
-
-# Need to do stratification due to unbalanced?
-# Nop. GridSearch used StratifiedKFold for classifiers if using cv = integer
-clf_rf = GridSearchCV(pipeline_rf, param_grid=param_grid, verbose=8, scoring=['precision', 'recall', 'f1'],
-                      refit=objective_metric,
-                      cv=5)
-clf_rf = clf_rf.fit(X, y)
+# n_estimators = [10, 50, 100]
+# criterion = ['gini', 'entropy']
+# max_depth = [3, 5, 10]
+# min_samples_split = [0.01, 0.05, 0.1, 0.2]
+# min_samples_leaf = [0.01, 0.05, 0.1, 0.2]
+# max_features = [None, "sqrt"]
+# class_weight = [None, "balanced"]
 
 
-model_results = model_results.append(helpers.extract_scores_kfold(clf_rf, None))
+# param_grid = dict(
+#     samp = samplers_to_test,  
+#     rf__n_estimators=n_estimators,
+#     rf__criterion=criterion,
+#     rf__max_depth=max_depth,
+#     rf__min_samples_split=min_samples_split,
+#     rf__min_samples_leaf=min_samples_leaf,
+#     rf__max_features=max_features,
+#     rf__class_weight=class_weight
+# )
+
+# # Need to do stratification due to unbalanced?
+# # Nop. GridSearch used StratifiedKFold for classifiers if using cv = integer
+# clf_rf = GridSearchCV(pipeline_rf, param_grid=param_grid, verbose=8, scoring=['precision', 'recall', 'f1'],
+#                       refit=objective_metric,
+#                       cv=5)
+# clf_rf = clf_rf.fit(X, y)
+
+
+# model_results = model_results.append(helpers.extract_scores_kfold(clf_rf, None))
 
 ## Neural Net
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
 
-pipeline_nn = Pipeline(
+pipeline_nn = imbPipeline(
     steps=[
+        ('samp', None),
         ('standard', StandardScaler()),
          ("NN", MLPClassifier())
     ]
@@ -223,6 +259,7 @@ hidden_layer_sizes = [(4,1), (4), (7),(5,2) , (10,5), (5,4,3)]
 activation = ['identity', 'relu', 'logistic', 'tanh']
 
 param_grid = dict(
+    samp = samplers_to_test,
     NN__hidden_layer_sizes=hidden_layer_sizes,
     NN__activation=activation
 )
@@ -252,13 +289,12 @@ results['benchmark_test_fbeta'] = bench_fbeta_val[1]
 
 results.to_csv('results.csv')
 
-
 # generate metrics in test set for best model (refit)
 # also generates the confusion matrix
 models_test = {'tree': clf_tree,
-'logistic': clf_lr,
-'rf': clf_rf,
-'neural_net': clf_nn }
+'logistic': clf_lr} #,
+# 'rf': clf_rf,
+# 'neural_net': clf_nn }
 
 ensemble_models = list(models_test.values())
 
