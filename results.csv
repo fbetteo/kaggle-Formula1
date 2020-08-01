@@ -1,6 +1,0 @@
-,mean_test_precision,mean_test_recall,mean_test_f1,rank_test_precision,rank_test_recall,rank_test_f1,params,benchmark_test_precision,benchmark_test_recall,benchmark_test_fbeta
-112,0.5036552396878484,0.882608695652174,0.6378195078195077,1,287,1,"{'samp': SMOTE(), 'tree__criterion': 'gini', 'tree__max_depth': 5, 'tree__min_samples_leaf': 0.01, 'tree__min_samples_split': 0.01}",0.5871559633027523,0.5378151260504201,0.5614035087719299
-323,0.09681660383432755,0.9579710144927537,0.1753875648975971,369,1,369,"{'samp': ClusterCentroids(), 'tree__criterion': 'gini', 'tree__max_depth': 10, 'tree__min_samples_leaf': 0.01, 'tree__min_samples_split': 0.2}",0.5871559633027523,0.5378151260504201,0.5614035087719299
-4,0.39346218324499393,0.9166666666666667,0.5500045303533676,5,1,5,"{'LR__class_weight': None, 'LR__penalty': 'l2', 'samp': RandomOverSampler()}",0.5871559633027523,0.5378151260504201,0.5614035087719299
-12,0.3891124722084474,0.9166666666666667,0.5456979596861744,6,1,6,"{'LR__class_weight': 'balanced', 'LR__penalty': 'l2', 'samp': RandomOverSampler()}",0.5871559633027523,0.5378151260504201,0.5614035087719299
-13,0.48440155983644767,0.8413043478260869,0.6111389028036454,1,7,1,"{'LR__class_weight': 'balanced', 'LR__penalty': 'l2', 'samp': SMOTE()}",0.5871559633027523,0.5378151260504201,0.5614035087719299
