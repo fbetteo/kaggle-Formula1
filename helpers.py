@@ -32,6 +32,21 @@ def metrics_in_test(model_name, model, X_test, y_test):
                                     )
     return [metrics, confusion]
 
+def benchmark_test(X_test, y_test):
+    y_predict_test = np.where(X_test['grid'] == 1, 1, 0)
+
+    precision_test,recall_test, fbeta_test, support_test = precision_recall_fscore_support(
+        y_test, y_predict_test)
+
+    metrics = pd.DataFrame([['benchmark', precision_test[1], recall_test[1], fbeta_test[1], support_test[1]]],
+                           columns=["Model", "precision", "recall", "fbeta", "support"])
+
+    confusion= pd.DataFrame(confusion_matrix(y_test, y_predict_test),  columns=["Pred Not First", "Pred  First"],
+                                    index=["True Not First", "True  First"]
+                                    )
+    return [metrics, confusion]
+
+  
 
 
 def ensemble_test(models, X_test, y_test):
