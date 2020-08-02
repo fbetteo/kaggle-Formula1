@@ -1,4 +1,4 @@
-# Formula 1 - Who will win?
+# Formula 1 - Predicting the winner.
 
 Based on [this dataset](https://www.kaggle.com/rohanrao/formula-1-world-championship-1950-2020) that has information about Formula 1 races since 1950 I tried to create a model to predict who will end in the first position in each race.  
 
